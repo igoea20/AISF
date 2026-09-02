@@ -4,7 +4,7 @@ version: 1.0.0
 type: software
 license: MIT
 abstract: "AISF is the Artifical Intelligence Surge Forecast software release, developed to forecast code at coastal tide gauges around Ireland. "
-message: "If you use AISF, please cite it as follows."
+message: "If you use AISF, please cite it as follows. DOI: 10.5281/zenodo.22256804"
 
 authors:
   - given-names: "Aoife"
