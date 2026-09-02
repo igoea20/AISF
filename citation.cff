@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: "AISF"
+version: 1.0.0
+type: software
+license: MIT
+abstract: "AISF is the Artifical Intelligence Surge Forecast software release, developed to forecast code at coastal tide gauges around Ireland. "
+message: "If you use AISF, please cite it as follows."
+
+authors:
+  - given-names: "Aoife"
+    family-names: "Igoe"
+    orcid: "https://orcid.org/0009-0004-3912-8578"
+    affiliation: "Trinity College Dublin"
+
+repository-code: "https://github.com/igoea20/AISF"
