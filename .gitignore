@@ -11,6 +11,20 @@ env/
 ENV/
 
 
+# data files
+PreProcessed/
+tide_gauge/
+Experiment2/
+*_data.csv
+
+
+# Examples
+IEEE_oceans/
+INHC_paper/
+Met_Eireann_implementation/
+event_driver_clustering/
+
+
 # secret keys
 .env
 

@@ -27,7 +27,6 @@ def download_weather_data(
     Download HRES forecast data for a date range.
 
     Data are downloaded from MARS in one request for the supplied date range.
-    The caller should keep the date range reasonably small (e.g. one month).
 
     Parameters
     ----------

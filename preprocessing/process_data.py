@@ -5,6 +5,7 @@ import os
 import hatyan
 from scipy import signal
 from pathlib import Path
+import pickle
 
 """
     Load and pre-process all observational hydro and meteo data, and TSFF hydro.
@@ -12,7 +13,7 @@ from pathlib import Path
 
 """
 
-def process_tide_gauge(folder):
+def process_tide_gauge(folder, station_name, harmonic_analysis_folder):
 
     """ This takes the QC file of the gauge and calculates the tide and surge residual, and saves
         the water level trend to file. """
@@ -36,7 +37,7 @@ def process_tide_gauge(folder):
     combined_df['water_level'] = combined_df['water_level'] - trend
     combined_df['Water_Level_trend'] = trend
 
-    results, comp = perform_tide_surge_analysis(combined_df, combined_df['Station_Name'].unique()[0])
+    results, comp, mean_offset = perform_tide_surge_analysis(combined_df, combined_df['Station_Name'].unique()[0])
     surge_name = 'SURGE'
     print(results.head(5))
     print(results.columns)
@@ -45,6 +46,10 @@ def process_tide_gauge(folder):
     station_report = generate_station_report(results, comp, combined_df['Station_Name'].unique()[0])
     combined_df = combined_df.drop(columns = ['water_level'])
     combined_df = combined_df.reset_index()
+
+    save_harmonic_analysis(comp, mean_offset, station_name, output_dir = harmonic_analysis_folder)
+
+
 
     return combined_df, station_report
 
@@ -186,6 +191,7 @@ def perform_tide_surge_analysis(df_clean, station_name):
         mean_offset = ts_df['values'].mean() - ts_prediction['values'].mean()
         ts_prediction['values'] += mean_offset
         
+        
         # Calculate surge component
         surge = ts_df['values'] - ts_prediction['values']
         
@@ -215,12 +221,28 @@ def perform_tide_surge_analysis(df_clean, station_name):
         # Remove any NaN values
         results = results.dropna()
         
-        return results, comp
+        return results, comp, mean_offset
         
     except Exception as e:
         print(f"ERROR in analysis for {station_name}: {str(e)}")
         return None, None
-    
+
+
+def save_harmonic_analysis(comp, mean_offset, station_name, output_dir):
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_dir / f"{station_name}_harmonic_analysis.pkl"
+
+    analysis = {
+        "comp": comp,
+        "mean_offset": mean_offset,
+    }
+
+    with open(output_file, "wb") as f:
+        pickle.dump(analysis, f)
+
+    return 0
 
 def generate_station_report(results, comp, station_name):
     """
@@ -493,11 +515,6 @@ def empirical_quantile_mapping_2025(
         # Save corrected 2025 HRES
         # ------------------------------------------------------------------
 
-        output_file.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
         hres_2025.to_csv(
             output_file,
             index=False,
@@ -519,11 +536,13 @@ def main(stations = None):
                 'Killybegs Port', 'Malin Head',  'Skerries Harbour', 'Sligo', 'Wexford', 'Fenit','Ferry Bridge Maigue', 'Foynes', 'Moneycashen', 'Port Bridge Swilly', 'Port Oriel', 'Ringaskiddy NMCI','Rossaveel Pier']
 
 
-    folder_base = '../Data/'
+    folder_base = '../../AISF_paper/Data/'
     folder_created = '../Data/PreProcessed/' 
-
+    harmonic_analysis_dir = folder_base + 'Harmonic_Analysis'
+    harmonic_analysis_dir = Path(harmonic_analysis_dir)
+    harmonic_analysis_dir.mkdir(parents=True, exist_ok=True)
     print('Preprocessing gauge data for: ', stations)
-    
+    """
     for gauge in stations: 
 
         output_dir = folder_created+gauge
@@ -534,26 +553,32 @@ def main(stations = None):
         models_dir = Path(models_dir)
         models_dir.mkdir(parents=True, exist_ok=True)
 
-        df_tide_gauge, station_report = process_tide_gauge(folder_base + 'tide_gauge/'+gauge+'/')
+        df_tide_gauge, station_report = process_tide_gauge(folder_base + 'tide_gauge/'+gauge+'/', gauge, harmonic_analysis_dir)
         df_tide_gauge.to_csv(output_dir / 'tide_gauge.csv', index = False)
         station_report.to_csv(output_dir / 'tide_gauge_report.csv', index = False)
 
-        df_ecmwf = process_ecmwf(folder_base + 'ecmwf/' + gauge + '/')
-        df_ecmwf.to_csv(output_dir / 'ecmwf.csv', index = False)
-
+        #df_ecmwf = process_ecmwf(folder_base + 'ecmwf/' + gauge + '/')
+        #df_ecmwf.to_csv(output_dir / 'ecmwf.csv', index = False)
+    """
     excluded_stations = [
         "Ballyglass",
         "Castletownbere",
     ]
-
+    
     qm_params = empirical_quantile_mapping_2025(
         stations=stations,
         vars_to_correct=['u_s', 'v_s', 'msl'],
-        hres_dir="../Data/HRES/",
-        model_data_dir="../Data/Model_Data/",
+        hres_dir="../../AISF_paper/Data/HRES/",
+        model_data_dir="../../AISF_paper/Data/Model_Data/",
         excluded_stations=excluded_stations,
     )
+    qm_file = Path("../Data/EQM/qm_parameters.pkl")
+    qm_file.parent.mkdir(parents=True, exist_ok=True)
 
+    with open(qm_file, "wb") as f:
+        pickle.dump(qm_params, f)
+
+    print(f"Saved EQM parameters to {qm_file}")
 if __name__ == '__main__':
     main()
 
