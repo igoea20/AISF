@@ -612,18 +612,18 @@ def get_input_data(date, date_str, output_dir, input_file,forecast_steps = 72, f
 
     return 0
 
-def get_figures(stations, date_str):
+def get_figures(stations, date_str, hour_str):
 
     """ 
         Plots the surge and TWL for the given stations, starting on the given date. 
         Saves to file as png.
     """
     
-    output_path = Path('Outputs/Figures/'+date_str)
+    output_path = Path('Outputs/Figures/'+date_str+ '/' + hour_str )
     output_path.mkdir(parents=True, exist_ok=True)
 
     for station in stations:
-        input_file = 'Outputs/Data/'+date_str+'/Forecast/'+station+'.csv'
+        input_file = 'Outputs/Data/'+date_str+ '/' + hour_str + '/Forecast/'+station+'.csv'
         output_surge_file = output_path/f'{station}_surge.png'
         output_twl_file = output_path/f'{station}_TWL.png'
     
@@ -705,10 +705,12 @@ def main(forecast_hour = '00z', date = '', forecast_steps = 72):
 
     if date == '':
         date = datetime.now().date()
+    else:
+        date = pd.to_datetime(date).date()
     
     date_str = str(date).replace('-', '_') #to save as a file
 
-    output_dir = Path('Outputs/Data/') / date_str
+    output_dir = Path('Outputs/Data/') / date_str / forecast_hour
     input_file = output_dir / 'input_data.csv'
     model_dir ='../../Data/Model_Data/'
     forecast_dir = output_dir/ 'Forecast'
@@ -725,8 +727,7 @@ def main(forecast_hour = '00z', date = '', forecast_steps = 72):
 
     #Forecast Surge and TWL
     df_input = pd.read_csv(input_file)
-    print(df_input.head(10))
-
+    
     for station in stations:
         print('Forecasting for ', station)
         model_folder = model_dir + station + '/Trained_Models/'
@@ -734,8 +735,8 @@ def main(forecast_hour = '00z', date = '', forecast_steps = 72):
         df_station = df_input[df_input['Station'] == station]
         df_station = model_surge(model_folder, df_station, [ 'msl', 'u_s', 'v_s','Tide'], num_models = 20)
         df_station.to_csv(forecast_dir/f'{station}.csv')
-
-    get_figures(stations, date_str)
+    
+    get_figures(stations, date_str, forecast_hour)
 
 
 
