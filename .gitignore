@@ -16,12 +16,17 @@ PreProcessed/
 tide_gauge/
 Experiment2/
 *_data.csv
+*.png
+Forecast/
+Weather/
+Tide/
 
 
 # Examples
 IEEE_oceans/
 INHC_paper/
-Met_Eireann_implementation/
+#Met_Eireann_implementation/
+*testing.ipynb
 event_driver_clustering/
 
 
